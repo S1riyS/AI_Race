@@ -19,7 +19,7 @@ class TrackGenerator(State):
         super().__init__(app)
         self.track_width = 275
         self.scale_coefficient = 3
-        self.number_of_random_points = 10
+        self.random_points_number = 10
         self.interpolation_segments_number = 50
         self.min_segment_angle: Radians = math.pi / 2
         self.track = None
@@ -48,10 +48,10 @@ class TrackGenerator(State):
 
         self.create_track()
 
-    def generate_hull_points(self) -> Curve:
+    def generate_convex_hull_points(self) -> Curve:
         """Creates array of points that lie on convex hull"""
         points = []
-        for i in range(self.number_of_random_points):
+        for i in range(self.random_points_number):
             x = random.randint(self.local_width * 0.15, self.local_width * 0.85)
             y = random.randint(self.local_height * 0.15, self.local_height * 0.85)
             points.append((x, y))
@@ -125,9 +125,9 @@ class TrackGenerator(State):
         self.local_surface.fill(pygame.Color(0, 0, 0))
 
         # Hull points
-        hull_points = self.generate_hull_points()
+        convex_hull_points = self.generate_convex_hull_points()
         # Bezier interpolation
-        central_curve, start_point = self.generate_bezier_curve_points(hull_points)
+        central_curve, start_point = self.generate_bezier_curve_points(convex_hull_points)
         # Inner and outer curves
         inner_curve, outer_curve = self.create_inner_and_outer_curves(central_curve)
 

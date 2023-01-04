@@ -24,7 +24,6 @@ class TrackGenerator(State):
         self.min_segment_angle: Radians = math.pi / 2
         self.track = None
 
-        self.local_manager = pygame_gui.UIManager(app.config.WINDOW_SIZE)
         self.local_width = app.config.WIDTH * self.scale_coefficient
         self.local_height = app.config.HEIGHT * self.scale_coefficient
         self.local_surface = pygame.surface.Surface((self.local_width, self.local_height))

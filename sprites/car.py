@@ -84,3 +84,5 @@ class Car(pygame.sprite.Sprite):
 
         if not moved:
             self.reduce_speed(dt)
+
+        self.mask = pygame.mask.from_surface(self.image)

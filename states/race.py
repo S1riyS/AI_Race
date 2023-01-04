@@ -1,7 +1,7 @@
 import pygame
 
 from states.state import State
-from sprites.car import Car
+from sprites.car import UserCar
 from sprites.track import Track
 
 
@@ -20,7 +20,7 @@ class Race(State):
         self.walls.add(walls)
 
     def start_race(self):
-        self.car = Car(self.track.start_point[0], self.track.start_point[1], group=self.app.camera_group)
+        self.car = UserCar(self.track.start_point[0], self.track.start_point[1], group=self.app.camera_group)
         self.cars.add(self.car)
 
     def handle_events(self, event) -> None:

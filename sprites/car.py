@@ -1,10 +1,11 @@
+from abc import ABC, abstractmethod
 from math import sin, cos, radians
 
 import pygame
 from pygame.math import Vector2
 
 
-class Car(pygame.sprite.Sprite):
+class AbstractCar(ABC, pygame.sprite.Sprite):
     def __init__(self, x, y, group):
         super().__init__(group)
         self.x = x
@@ -67,6 +68,16 @@ class Car(pygame.sprite.Sprite):
         self.velocity = max(self.velocity - self.deceleration * dt, 0)
         self.move(dt)
 
+    @abstractmethod
+    def update(self, dt) -> None:
+        """Updates car's data"""
+        ...
+
+
+class UserCar(AbstractCar):
+    def __init__(self, x, y, group):
+        super().__init__(x, y, group)
+
     def update(self, dt) -> None:
         key = pygame.key.get_pressed()
         moved = False
@@ -86,3 +97,11 @@ class Car(pygame.sprite.Sprite):
             self.reduce_speed(dt)
 
         self.mask = pygame.mask.from_surface(self.image)
+
+
+class AICar(AbstractCar):
+    def __init__(self, x, y, group):
+        super().__init__(x, y, group)
+
+    def update(self, dt) -> None:
+        ...

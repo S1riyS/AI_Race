@@ -1,8 +1,6 @@
 import math
 
-from local_typing import Point
-
-Radians = float
+from local_typing import Point, Radians
 
 
 def angle_between_three_points(p1: Point, p2: Point, p3: Point) -> Radians:

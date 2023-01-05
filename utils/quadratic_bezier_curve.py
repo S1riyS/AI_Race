@@ -1,6 +1,4 @@
-import typing as t
-
-from utils.types import Point, Curve
+from local_typing import Point, Curve
 
 
 class QuadraticBezierCurve:

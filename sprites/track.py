@@ -6,7 +6,7 @@ from pygame.sprite import Group
 
 from globals import context
 from sprites.wall import Wall
-from utils.types import Point, Curve
+from local_typing import Point, Curve
 
 
 class Track:

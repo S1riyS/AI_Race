@@ -3,11 +3,10 @@ Source: https://github.com/thestarvanisher/bezier_curve_interpolation
 """
 
 import typing as t
-import math
 
 import numpy as np
 
-from utils.types import Point, Curve
+from local_typing import Point, Curve
 
 
 class BezierCurve:

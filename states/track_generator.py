@@ -12,7 +12,7 @@ from sprites.track import Track
 from utils.convex_hull import ConvexHull
 from utils.bezier_curve import BezierCurve
 from utils.math import angle_between_three_points, Radians
-from utils.types import Point, Curve
+from local_typing import Point, Curve
 
 
 class TrackGenerator(State):

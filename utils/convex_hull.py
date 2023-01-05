@@ -1,6 +1,6 @@
 import typing as t
 
-from utils.types import Point
+from local_typing import Point
 
 
 class ConvexHull:

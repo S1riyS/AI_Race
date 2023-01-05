@@ -1,6 +1,6 @@
 import math
 
-from utils.types import Point
+from local_typing import Point
 
 Radians = float
 

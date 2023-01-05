@@ -1,6 +1,6 @@
 import pygame
 
-from utils.types import Coordinate
+from local_typing import Coordinate
 
 
 class Wall(pygame.sprite.Sprite):

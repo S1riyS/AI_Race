@@ -4,6 +4,8 @@ from math import sin, cos, radians
 import pygame
 from pygame.math import Vector2
 
+from globals import context
+
 
 class AbstractCar(ABC, pygame.sprite.Sprite):
     def __init__(self, x, y, group):
@@ -77,6 +79,8 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 class UserCar(AbstractCar):
     def __init__(self, x, y, group):
         super().__init__(x, y, group)
+        # self.color = pygame.Color(243, 69, 96)
+        self.color = context['theme'].USER_CAR_COLOR
 
     def update(self, dt) -> None:
         key = pygame.key.get_pressed()

@@ -2,6 +2,8 @@ import pygame
 import pygame_gui
 
 from config import Config, base_config
+from theme import Theme, DarkTheme
+from globals import context
 from camera import CameraGroup
 from states.track_generator import TrackGenerator
 
@@ -9,8 +11,15 @@ pygame.init()
 
 
 class App:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, theme: Theme = DarkTheme):
+        """
+        Initialization of PyGame app
+        :param config: Config object with setting of application
+        :param theme: App's theme (DarkTheme by default)
+        """
         self.config = config
+        context['theme'] = theme
+        context['current_app'] = self
         self.screen = pygame.display.set_mode(self.config.WINDOW_SIZE)
         self.clock = pygame.time.Clock()
         pygame.display.set_caption(self.config.CAPTION)
@@ -63,5 +72,5 @@ class App:
 
 
 if __name__ == '__main__':
-    app = App(config=base_config)
+    app = App(config=base_config, theme=DarkTheme)
     app.run()

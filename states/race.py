@@ -1,5 +1,6 @@
 import pygame
 
+from globals import context
 from states.state import State
 from sprites.car import UserCar
 from sprites.track import Track
@@ -35,5 +36,5 @@ class Race(State):
                 self.start_race()
 
     def render(self, surface):
-        surface.fill(pygame.Color(13, 13, 23))
+        surface.fill(context['theme'].BACKGROUND_COLOR)
         self.app.camera_group.custom_draw(target=self.car)

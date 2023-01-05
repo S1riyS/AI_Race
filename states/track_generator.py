@@ -5,6 +5,7 @@ import random
 import pygame
 import pygame_gui
 
+from globals import context
 from states.state import State
 from states.race import Race
 from sprites.track import Track
@@ -18,14 +19,14 @@ class TrackGenerator(State):
     def __init__(self, app):
         super().__init__(app)
         self.track_width = 275
-        self.scale_coefficient = 3
+        self.scale = 3
         self.random_points_number = 10
         self.interpolation_segments_number = 50
         self.min_segment_angle: Radians = math.pi / 2
         self.track = None
 
-        self.local_width = app.config.WIDTH * self.scale_coefficient
-        self.local_height = app.config.HEIGHT * self.scale_coefficient
+        self.local_width = app.config.WIDTH * self.scale
+        self.local_height = app.config.HEIGHT * self.scale
         self.local_surface = pygame.surface.Surface((self.local_width, self.local_height))
 
         self.recreate_track_button = pygame_gui.elements.UIButton(
@@ -61,9 +62,9 @@ class TrackGenerator(State):
 
         return hull_points
 
-    def generate_bezier_curve_points(self, hull_points: Curve) -> t.Tuple[Curve, Point]:
-        """Interpolates path of hull points through Bezier Curves"""
-        bezier_curve = BezierCurve(points=hull_points, curve_points_number=self.interpolation_segments_number)
+    def generate_bezier_curve_points(self, points: Curve) -> t.Tuple[Curve, Point]:
+        """Returns interpolated path of hull points through Bezier Curves and start point"""
+        bezier_curve = BezierCurve(points=points, curve_points_number=self.interpolation_segments_number)
         bezier_curve_points = bezier_curve.get_points()
         start_point = bezier_curve_points[max(bezier_curve.curve_points_number // 10, 1)]
 
@@ -105,14 +106,14 @@ class TrackGenerator(State):
 
             outer_curve_points.append(
                 (
-                    p2[0] + (1 / self.scale_coefficient) * self.track_width * math.cos(beta),
-                    p2[1] + (1 / self.scale_coefficient) * self.track_width * math.sin(beta)
+                    p2[0] + (1 / self.scale) * self.track_width * math.cos(beta),
+                    p2[1] + (1 / self.scale) * self.track_width * math.sin(beta)
                 )
             )
             inner_curve_points.append(
                 (
-                    p2[0] - (1 / self.scale_coefficient) * self.track_width * math.cos(beta),
-                    p2[1] - (1 / self.scale_coefficient) * self.track_width * math.sin(beta)
+                    p2[0] - (1 / self.scale) * self.track_width * math.cos(beta),
+                    p2[1] - (1 / self.scale) * self.track_width * math.sin(beta)
                 )
             )
 
@@ -122,7 +123,7 @@ class TrackGenerator(State):
 
     def create_track(self) -> None:
         """Creates and displays new track"""
-        self.local_surface.fill(pygame.Color(0, 0, 0))
+        self.local_surface.fill(context['theme'].BACKGROUND_COLOR)
 
         # Hull points
         convex_hull_points = self.generate_convex_hull_points()
@@ -137,7 +138,7 @@ class TrackGenerator(State):
             outer_curve=outer_curve,
             start_point=start_point
         )
-        self.track.render_preview(self.local_surface)
+        self.track.render_preview(self.local_surface, self.scale)
 
     def start_race(self) -> None:
         race = Race(self.app, self.track)

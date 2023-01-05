@@ -4,6 +4,7 @@ import pygame
 from pygame.surface import Surface
 from pygame.sprite import Group
 
+from globals import context
 from sprites.wall import Wall
 from utils.types import Point, Curve
 
@@ -57,8 +58,9 @@ class Track:
         pygame.draw.polygon(surface, color, self.outer_curve)
         pygame.draw.polygon(surface, pygame.Color(0, 0, 0), self.inner_curve)
 
-    def render_preview(self, surface: Surface):
-        self.__fill_road(pygame.Color(255, 255, 255), surface)
-        self.__draw_curve(self.inner_curve, pygame.Color(125, 125, 125), surface)
-        self.__draw_curve(self.outer_curve, pygame.Color(125, 125, 125), surface)
-        self.__draw_curve(self.central_curve, pygame.Color(0, 255, 0), surface)
+    def render_preview(self, surface: Surface, scale: int) -> None:
+        """Renders preview of track"""
+        print(context['current_app'].state_stack)
+        self.__draw_curve(self.inner_curve, context['theme'].WALL_COLOR, surface)
+        self.__draw_curve(self.outer_curve, context['theme'].WALL_COLOR, surface)
+        pygame.draw.circle(surface, context['theme'].AI_CAR_COLOR, self.start_point, 25 * (1 / scale))

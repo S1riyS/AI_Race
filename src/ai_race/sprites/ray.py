@@ -2,7 +2,6 @@ import typing as t
 from math import sin, cos, radians, pi, hypot
 
 import pygame
-from pygame.sprite import Group
 from pygame.math import Vector2
 
 from sprites.line_sprite import LineSprite

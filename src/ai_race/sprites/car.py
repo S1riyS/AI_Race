@@ -1,4 +1,3 @@
-import typing as t
 from abc import ABC, abstractmethod
 from math import sin, cos, radians, pi
 
@@ -50,7 +49,7 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
             angle = (pi / (number - 1)) * i
             ray = Ray(
                 car=self,
-                length=200,
+                length=250,
                 angle=angle,
             )
             self.rays.add(ray)

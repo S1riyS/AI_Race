@@ -1,12 +1,16 @@
+import typing as t
 from abc import ABC, abstractmethod
 
 from pygame.surface import Surface
 from pygame.event import Event
 import pygame_gui
 
+if t.TYPE_CHECKING:
+    from app import App
+
 
 class State(ABC):
-    def __init__(self, app):
+    def __init__(self, app: "App"):
         self.app = app
         self.local_manager = pygame_gui.UIManager(self.app.config.WINDOW_SIZE)
         self.prev_state = None

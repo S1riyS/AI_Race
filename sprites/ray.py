@@ -51,19 +51,15 @@ class Ray(LineSprite):
 
         return result_point, result_distance
 
-    def cast_to_singe_wall(self, wall: Wall) -> t.Tuple[t.Optional[Point], t.Optional[float]]:
+    def cast_to_singe_wall(self, wall: Wall) -> t.Union[t.Tuple[None, None], t.Tuple[Point, float]]:
         """Casts ray in given wall"""
         # Get start and end points of the wall
-        x1 = wall.start_position[0]
-        y1 = wall.start_position[1]
-        x2 = wall.end_position[0]
-        y2 = wall.end_position[1]
+        x1, y1 = wall.start_position
+        x2, y2 = wall.end_position
 
         # Position of the ray
-        x3 = self.start_position[0]
-        y3 = self.start_position[1]
-        x4 = self.end_position[0]
-        y4 = self.end_position[1]
+        x3, y3 = self.start_position
+        x4, y4 = self.end_position
 
         denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
         numerator = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)

@@ -2,11 +2,11 @@ import pygame
 
 from globals import context
 from sprites.line_sprite import LineSprite
-from local_typing import Coordinate
+from local_typing import Point
 
 
 class Wall(LineSprite):
-    def __init__(self, group: pygame.sprite.Group, start_position: Coordinate, end_position: Coordinate):
+    def __init__(self, group: pygame.sprite.Group, start_position: Point, end_position: Point):
         self.start_position = start_position
         self.end_position = end_position
 

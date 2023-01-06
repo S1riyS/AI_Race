@@ -51,7 +51,7 @@ class Track:
     @staticmethod
     def __draw_curve(curve: Curve, color: pygame.Color, surface: Surface) -> None:
         """Draws closed curve with certain color"""
-        pygame.draw.lines(surface, color, True, curve, 4)
+        pygame.draw.lines(surface, color, True, curve, 6)
 
     def __fill_road(self, color: pygame.Color, surface: Surface) -> None:
         """Fills polygon with certain color"""
@@ -60,7 +60,6 @@ class Track:
 
     def render_preview(self, surface: Surface, scale: int) -> None:
         """Renders preview of track"""
-        print(context['current_app'].state_stack)
         self.__draw_curve(self.inner_curve, context['theme'].WALL_COLOR, surface)
         self.__draw_curve(self.outer_curve, context['theme'].WALL_COLOR, surface)
-        pygame.draw.circle(surface, context['theme'].AI_CAR_COLOR, self.start_point, 25 * (1 / scale))
+        pygame.draw.circle(surface, context['theme'].AI_CAR_COLOR, self.start_point, 50 * (1 / scale))

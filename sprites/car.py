@@ -1,21 +1,23 @@
+import typing as t
 from abc import ABC, abstractmethod
-from math import sin, cos, radians
+from math import sin, cos, radians, pi
 
 import pygame
 from pygame.math import Vector2
 
 from globals import context
+from sprites.ray import Ray
 
 
 class AbstractCar(ABC, pygame.sprite.Sprite):
-    def __init__(self, x, y, group):
-        super().__init__(group)
+    def __init__(self, x: int, y: int, camera: pygame.sprite.Group):
+        super().__init__(camera)
         self.x = x
         self.y = y
 
         self.width = 60
         self.height = 30
-        self.color = pygame.Color(243, 69, 96)
+        self.color: pygame.Color
 
         self.original_image = pygame.Surface((self.width, self.height))
         self.original_image.set_colorkey(pygame.Color(0, 0, 0))
@@ -37,6 +39,31 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.max_velocity = 11
         self.acceleration = 0.2
         self.deceleration = 0.5
+
+        self.camera = camera
+        self.rays = pygame.sprite.Group()
+
+    def init_rays(self, rays_number: int):
+        self.rays = pygame.sprite.Group()
+
+        rays_number = max(2, rays_number)
+        for i in range(rays_number):
+            angle = (pi / (rays_number - 1)) * i
+            ray = Ray(
+                car=self,
+                length=200,
+                angle=angle,
+            )
+            self.rays.add(ray)
+
+    def draw_rays(self):
+        for ray in self.rays:
+            ray.draw()
+
+    def kill(self) -> None:
+        for ray in self.rays:
+            ray.kill()
+        super().kill()
 
     def rotate(self, dt, left=False, right=False):
         if left:
@@ -70,19 +97,21 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.velocity = max(self.velocity - self.deceleration * dt, 0)
         self.move(dt)
 
-    @abstractmethod
     def update(self, dt) -> None:
+        self.inherited_update(dt)
+        self.rays.update()
+
+    @abstractmethod
+    def inherited_update(self, dt) -> None:
         """Updates car's data"""
-        ...
 
 
 class UserCar(AbstractCar):
-    def __init__(self, x, y, group):
-        super().__init__(x, y, group)
-        # self.color = pygame.Color(243, 69, 96)
+    def __init__(self, x, y, camera):
         self.color = context['theme'].USER_CAR_COLOR
+        super().__init__(x, y, camera)
 
-    def update(self, dt) -> None:
+    def inherited_update(self, dt) -> None:
         key = pygame.key.get_pressed()
         moved = False
 
@@ -104,8 +133,9 @@ class UserCar(AbstractCar):
 
 
 class AICar(AbstractCar):
-    def __init__(self, x, y, group):
-        super().__init__(x, y, group)
+    def __init__(self, x, y, camera):
+        self.color = context['theme'].AI_CAR_COLOR
+        super().__init__(x, y, camera)
 
-    def update(self, dt) -> None:
+    def inherited_update(self, dt) -> None:
         ...

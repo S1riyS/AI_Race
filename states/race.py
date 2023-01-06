@@ -21,7 +21,12 @@ class Race(State):
         self.walls.add(walls)
 
     def start_race(self):
-        self.car = UserCar(self.track.start_point[0], self.track.start_point[1], group=self.app.camera_group)
+        self.car = UserCar(
+            self.track.start_point[0],
+            self.track.start_point[1],
+            camera=self.app.camera_group
+        )
+        self.car.init_rays(rays_number=6)
         self.cars.add(self.car)
 
     def handle_events(self, event) -> None:
@@ -29,12 +34,21 @@ class Race(State):
 
     def update(self, dt):
         self.cars.update(dt)
+        self.walls.update()
+
+    def render(self, surface):
+        surface.fill(context['theme'].BACKGROUND_COLOR)
+        if self.app.config.DEBUG:
+            self.car.draw_rays()
 
         for wall in self.walls:
             if pygame.sprite.collide_mask(self.car, wall):
                 self.car.kill()
                 self.start_race()
 
-    def render(self, surface):
-        surface.fill(context['theme'].BACKGROUND_COLOR)
         self.app.camera_group.custom_draw(target=self.car)
+
+        for ray in self.car.rays:
+            point, distance = ray.cast(self.walls)
+            if point:
+                pygame.draw.circle(surface, (255, 255, 0), point - self.app.camera_group.offset, 5)

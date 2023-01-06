@@ -42,13 +42,12 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
         self.camera = camera
         self.rays = pygame.sprite.Group()
+        self.init_rays(number=6)
 
-    def init_rays(self, rays_number: int):
-        self.rays = pygame.sprite.Group()
-
-        rays_number = max(2, rays_number)
-        for i in range(rays_number):
-            angle = (pi / (rays_number - 1)) * i
+    def init_rays(self, number: int):
+        rays_number = max(2, number)
+        for i in range(number):
+            angle = (pi / (number - 1)) * i
             ray = Ray(
                 car=self,
                 length=200,

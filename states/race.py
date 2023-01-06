@@ -26,7 +26,6 @@ class Race(State):
             self.track.start_point[1],
             camera=self.app.camera_group
         )
-        self.car.init_rays(rays_number=6)
         self.cars.add(self.car)
 
     def handle_events(self, event) -> None:

@@ -16,19 +16,19 @@ class Track:
         self.outer_curve = outer_curve
         self.start_point = start_point
 
-    def generate_walls(self, group: Group, closed: bool = False) -> t.List[Wall]:
+    def generate_walls(self, camera: Group, closed: bool = False) -> t.List[Wall]:
         walls = []
-        inner_walls = self.__curve_to_sprites(self.inner_curve, group)
-        outer_walls = self.__curve_to_sprites(self.outer_curve, group)
+        inner_walls = self.__curve_to_sprites(self.inner_curve, camera)
+        outer_walls = self.__curve_to_sprites(self.outer_curve, camera)
         if closed:
             additional_walls = [
-                Wall(group, self.inner_curve[0], self.inner_curve[-1]),
-                Wall(group, self.outer_curve[0], self.outer_curve[-1])
+                Wall(self.inner_curve[0], self.inner_curve[-1], camera),
+                Wall(self.outer_curve[0], self.outer_curve[-1], camera)
             ]
         else:
             additional_walls = [
-                Wall(group, self.inner_curve[0], self.outer_curve[0]),
-                Wall(group, self.inner_curve[-1], self.outer_curve[-1])
+                Wall(self.inner_curve[0], self.outer_curve[0], camera),
+                Wall(self.inner_curve[-1], self.outer_curve[-1], camera)
             ]
 
         walls.extend(inner_walls)
@@ -38,13 +38,13 @@ class Track:
         return walls
 
     @staticmethod
-    def __curve_to_sprites(curve: Curve, group: Group) -> t.List[Wall]:
+    def __curve_to_sprites(curve: Curve, camera: Group) -> t.List[Wall]:
         """Converts curve to array of Wall sprites"""
         walls = []
         for index in range(len(curve) - 1):
             start = curve[index]
             end = curve[index + 1]
-            walls.append(Wall(group, start, end))
+            walls.append(Wall(start, end, camera))
 
         return walls
 

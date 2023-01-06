@@ -4,7 +4,7 @@ import pygame_gui
 from config import Config, base_config
 from theme import Theme, DarkTheme
 from globals import context
-from camera import CameraGroup
+from camera import Camera
 from states.track_generator import TrackGenerator
 
 pygame.init()
@@ -24,7 +24,7 @@ class App:
         self.clock = pygame.time.Clock()
         pygame.display.set_caption(self.config.CAPTION)
 
-        self.camera_group = CameraGroup()
+        self.camera_group = Camera()
         self.manager = pygame_gui.UIManager(self.config.WINDOW_SIZE)
 
         self.is_running = True

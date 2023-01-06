@@ -10,8 +10,8 @@ from local_typing import Point
 class LineSprite(ABC, Sprite):
     """Basic class for all sprites based on line (pygame.draw.line)"""
 
-    def __init__(self, group: Group):
-        super().__init__(group)
+    def __init__(self, camera: Group):
+        super().__init__(camera)
 
         self.color: pygame.Color
         self.thickness: int

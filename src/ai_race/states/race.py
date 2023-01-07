@@ -2,8 +2,10 @@ import pygame
 
 from globals import context
 from states.state import State
-from sprites.car import UserCar
+from sprites.car import UserCar, AICar
 from sprites.track import Track
+from ai import NeuralNetwork
+from ai.layers import Layer
 
 
 class Race(State):
@@ -21,15 +23,24 @@ class Race(State):
         self.walls.add(walls)
 
     def start_race(self):
-        self.car = UserCar(
-            self.track.start_point[0],
-            self.track.start_point[1],
-            camera=self.app.camera_group
-        )
-        self.cars.add(self.car)
+        for i in range(10):
+            car = AICar(
+                self.track.start_point,
+                neural_network=NeuralNetwork([
+                    Layer(units=7, activation='sigmoid'),
+                    Layer(units=10, activation='sigmoid'),
+                    Layer(units=4),
+                ]),
+                camera=self.app.camera_group
+            )
+            self.cars.add(car)
 
     def handle_events(self, event) -> None:
-        ...
+        key = pygame.key.get_pressed()
+        if key[pygame.K_1]:
+            for car in self.cars:
+                car.kill()
+            self.start_race()
 
     def update(self, dt):
         self.cars.update(dt)
@@ -37,17 +48,23 @@ class Race(State):
 
     def render(self, surface):
         surface.fill(context['theme'].BACKGROUND_COLOR)
-        if self.app.config.DEBUG:
-            self.car.draw_rays()
+        # if self.app.config.DEBUG:
+        #     for car in self.cars:
+        #         car.draw_rays()
 
-        for wall in self.walls:
-            if pygame.sprite.collide_mask(self.car, wall):
-                self.car.kill()
-                self.start_race()
+        self.app.camera_group.custom_draw(target=self.cars.sprites()[0])
 
-        self.app.camera_group.custom_draw(target=self.car)
+        for car in self.cars:
+            nearest_walls = car.get_nearest_walls(self.walls)
 
-        for ray in self.car.rays:
-            point, distance = ray.cast(self.walls)
-            if point:
-                pygame.draw.circle(surface, (255, 255, 0), point - self.app.camera_group.offset, 5)
+            for wall in nearest_walls:
+                if pygame.sprite.collide_mask(car, wall):
+                    car.kill()
+                    if len(self.cars) <= 0:
+                        self.start_race()
+
+            for ray in car.rays:
+                point, distance = ray.cast(nearest_walls)
+                if point:
+                    ray.current_distance = distance
+                    pygame.draw.circle(surface, (254, 246, 91), point - self.app.camera_group.offset, 5)

@@ -23,13 +23,20 @@ class Ray(LineSprite):
 
         super().__init__(self.car.camera)
 
+        self.current_distance = 0
+
     def calculate_global_position(self):
-        direction = Vector2(
+        car_direction = Vector2(
+            cos(radians(self.car.rotation)),
+            -sin(radians(self.car.rotation))
+        )
+        ray_direction = Vector2(
             cos(radians(self.car.rotation) + self.angle - pi / 2),
             -sin(radians(self.car.rotation) + self.angle - pi / 2)
         )
-        start_position = self.car.positional_vector
-        end_position = start_position + direction * self.length
+
+        start_position = self.car.positional_vector + car_direction * self.car.height
+        end_position = start_position + ray_direction * self.length
 
         return start_position, end_position
 
@@ -39,7 +46,7 @@ class Ray(LineSprite):
         :returns: Coordinates of nearest collision point and distance to this point
         """
         result_point = None
-        result_distance = float('inf')
+        result_distance = self.length
 
         for wall in walls:
             collision_point, distance = self.cast_to_singe_wall(wall)

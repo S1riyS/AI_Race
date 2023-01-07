@@ -1,18 +1,21 @@
+import typing as t
 from abc import ABC, abstractmethod
-from math import sin, cos, radians, pi
+from math import sin, cos, radians, pi, hypot
 
 import pygame
 from pygame.math import Vector2
 
 from globals import context
 from sprites.ray import Ray
+from sprites.wall import Wall
+from ai import NeuralNetwork
+from local_typing import Point
 
 
 class AbstractCar(ABC, pygame.sprite.Sprite):
-    def __init__(self, x: int, y: int, camera: pygame.sprite.Group):
+    def __init__(self, start_position: Point, camera: pygame.sprite.Group):
         super().__init__(camera)
-        self.x = x
-        self.y = y
+        self.x, self.y = start_position
 
         self.width = 60
         self.height = 30
@@ -44,7 +47,7 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.init_rays(number=6)
 
     def init_rays(self, number: int):
-        rays_number = max(2, number)
+        number = max(2, number)
         for i in range(number):
             angle = (pi / (number - 1)) * i
             ray = Ray(
@@ -57,6 +60,18 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
     def draw_rays(self):
         for ray in self.rays:
             ray.draw()
+
+    def get_nearest_walls(self, walls: t.Iterable[Wall]) -> t.Iterable[Wall]:
+        nearest_walls = []
+        for wall in walls:
+            dx = wall.start_position[0] - self.positional_vector.x
+            dy = wall.start_position[1] - self.positional_vector.y
+            distance = hypot(dx, dy)
+
+            if distance <= 900:
+                nearest_walls.append(wall)
+
+        return nearest_walls
 
     def kill(self) -> None:
         for ray in self.rays:
@@ -105,9 +120,9 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
 
 class UserCar(AbstractCar):
-    def __init__(self, x, y, camera):
+    def __init__(self, start_position, camera):
         self.color = context['theme'].USER_CAR_COLOR
-        super().__init__(x, y, camera)
+        super().__init__(start_position, camera)
 
     def inherited_update(self, dt) -> None:
         key = pygame.key.get_pressed()
@@ -131,9 +146,36 @@ class UserCar(AbstractCar):
 
 
 class AICar(AbstractCar):
-    def __init__(self, x, y, camera):
+    def __init__(self, start_position: Point, neural_network: NeuralNetwork, camera):
         self.color = context['theme'].AI_CAR_COLOR
-        super().__init__(x, y, camera)
+        self.neural_network = neural_network
+
+        super().__init__(start_position, camera)
+
+    def get_neural_network_inputs(self):
+        inputs = []
+        for ray in self.rays:
+            inputs.append(ray.current_distance / ray.length)
+        inputs.append(self.velocity / self.max_velocity)
+
+        return inputs
 
     def inherited_update(self, dt) -> None:
-        ...
+        inputs_list = self.get_neural_network_inputs()
+        answer = self.neural_network.query(inputs_list)
+        action = answer.argmax()
+
+        moved = False
+        if action == 0:
+            moved = True
+            self.move_backward(dt)
+        elif action == 1:
+            moved = True
+            self.move_forward(dt)
+        if action == 2:
+            self.rotate(dt, right=True)
+        elif action == 3:
+            self.rotate(dt, left=True)
+
+        if not moved:
+            self.reduce_speed(dt)

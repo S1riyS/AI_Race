@@ -32,5 +32,5 @@ class Layer(BaseLayer):
         return self._repr({
             'units': self.units,
             'activation function': getattr(self.activation_function, '__name__', 'Undefined'),
-            'weights shape': getattr(self.weights, 'shape', 'Undefined')
+            'weights': getattr(self, 'weights', 'Undefined')
         })

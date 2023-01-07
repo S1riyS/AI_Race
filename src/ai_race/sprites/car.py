@@ -6,10 +6,10 @@ import pygame
 from pygame.math import Vector2
 
 from globals import context
+from ai import NeuralNetwork
 from sprites.ray import Ray
 from sprites.wall import Wall
-from ai import NeuralNetwork
-from local_typing import Point
+from local_typing import Point, Curve
 
 
 class AbstractCar(ABC, pygame.sprite.Sprite):
@@ -30,7 +30,7 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
-        self.positional_vector = Vector2(self.x, self.y)
+        self.position = Vector2(self.x, self.y)
 
         self.mask = pygame.mask.from_surface(self.image)
 
@@ -64,14 +64,42 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
     def get_nearest_walls(self, walls: t.Iterable[Wall]) -> t.Iterable[Wall]:
         nearest_walls = []
         for wall in walls:
-            dx = wall.start_position[0] - self.positional_vector.x
-            dy = wall.start_position[1] - self.positional_vector.y
+            dx = wall.start_position[0] - self.position.x
+            dy = wall.start_position[1] - self.position.y
             distance = hypot(dx, dy)
 
             if distance <= 900:
                 nearest_walls.append(wall)
 
         return nearest_walls
+
+    def evaluate(self, curve: Curve):
+        fit = 0
+
+        min_distance = float('inf')
+        closest_index = None
+
+        # Calculating index of point on curve that is the closest to current position of car
+        for index, point in enumerate(curve):
+            dx = point[0] - self.position[0]
+            dy = point[1] - self.position[1]
+            distance = hypot(dx, dy)
+            if distance <= min_distance:
+                min_distance = distance
+                closest_index = index
+
+        # Calculating path length from the first point on curve to the point before closest to current position of car
+        for i in range(closest_index - 1):
+            current_point = curve[i]
+            next_point = curve[i + 1]
+            dx = next_point[0] - current_point[0]
+            dy = next_point[1] - current_point[1]
+            fit += hypot(dx, dy)
+
+        # Calculating distance between the point before closest to current position of car to the position of car
+        penultimate_closest_point = curve[closest_index - 1]
+        fit += hypot(penultimate_closest_point[0] - self.position[0], penultimate_closest_point[1] - self.position[1])
+        return fit
 
     def kill(self) -> None:
         for ray in self.rays:
@@ -95,8 +123,8 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
             self.velocity * cos(radians(self.rotation)),
             -self.velocity * sin(radians(self.rotation))
         )
-        self.positional_vector += velocity_vector * dt
-        self.rect.center = self.positional_vector
+        self.position += velocity_vector * dt
+        self.rect.center = self.position
 
     def move_forward(self, dt):
         self.velocity = min(self.velocity + self.acceleration * dt, self.max_velocity)
@@ -179,3 +207,6 @@ class AICar(AbstractCar):
 
         if not moved:
             self.reduce_speed(dt)
+
+
+CarClass = t.Union[UserCar, AICar]

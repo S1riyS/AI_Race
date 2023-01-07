@@ -9,11 +9,11 @@ from sprites.wall import Wall
 from local_typing import Point, Radians
 
 if t.TYPE_CHECKING:
-    from sprites.car import AbstractCar
+    from sprites.car import CarClass
 
 
 class Ray(LineSprite):
-    def __init__(self, car: "AbstractCar", length: int, angle: Radians):
+    def __init__(self, car: "CarClass", length: int, angle: Radians):
         self.car = car
         self.length = length
         self.angle = angle
@@ -35,7 +35,7 @@ class Ray(LineSprite):
             -sin(radians(self.car.rotation) + self.angle - pi / 2)
         )
 
-        start_position = self.car.positional_vector + car_direction * self.car.height
+        start_position = self.car.position + car_direction * self.car.height
         end_position = start_position + ray_direction * self.length
 
         return start_position, end_position

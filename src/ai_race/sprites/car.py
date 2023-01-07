@@ -118,14 +118,6 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = old_center
 
-    def move(self, dt):
-        velocity_vector = Vector2(
-            self.velocity * cos(radians(self.rotation)),
-            -self.velocity * sin(radians(self.rotation))
-        )
-        self.position += velocity_vector * dt
-        self.rect.center = self.position
-
     def move_forward(self, dt):
         self.velocity = min(self.velocity + self.acceleration * dt, self.max_velocity)
         self.move(dt)
@@ -138,9 +130,18 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.velocity = max(self.velocity - self.deceleration * dt, 0)
         self.move(dt)
 
+    def move(self, dt):
+        velocity_vector = Vector2(
+            self.velocity * cos(radians(self.rotation)),
+            -self.velocity * sin(radians(self.rotation))
+        )
+        self.position += velocity_vector * dt
+        self.rect.center = self.position
+
     def update(self, dt) -> None:
         self.inherited_update(dt)
         self.rays.update()
+        self.mask = pygame.mask.from_surface(self.image)
 
     @abstractmethod
     def inherited_update(self, dt) -> None:
@@ -169,8 +170,6 @@ class UserCar(AbstractCar):
 
         if not moved:
             self.reduce_speed(dt)
-
-        self.mask = pygame.mask.from_surface(self.image)
 
 
 class AICar(AbstractCar):

@@ -19,6 +19,7 @@ class NeuralNetwork:
         :param layers_sequence: Sequence of Layer class instances
         """
         self.layers = layers_sequence
+        self.weighted_layers = self.layers[:-1]
         self.__set_weights()
 
     def __set_weights(self) -> None:

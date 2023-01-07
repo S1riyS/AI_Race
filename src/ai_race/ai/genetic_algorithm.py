@@ -1,3 +1,7 @@
+"""
+Based on https://github.com/kiecodes/genetic-algorithms/tree/master
+"""
+
 import typing as t
 from random import choice, choices, randint, randrange, random
 

@@ -7,6 +7,17 @@ from .layers import Layer
 
 class NeuralNetwork:
     def __init__(self, layers_sequence: t.Sequence[Layer]):
+        """
+        First layer must contain number of units that equals to number of car's rays + car's velocity
+
+        For example: each car has 6 rays, then initialization of neural network will look like this:
+
+            neural_network = NeuralNetwork([
+                Layer(units=7, activation='sigmoid (e.g.)'),
+                ...
+            ])
+        :param layers_sequence: Sequence of Layer class instances
+        """
         self.layers = layers_sequence
         self.__set_weights()
 

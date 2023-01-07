@@ -20,8 +20,8 @@ class TrackGenerator(State):
         super().__init__(app)
         self.track_width = 275
         self.scale = 3
-        self.random_points_number = 10
-        self.interpolation_segments_number = 50
+        self.random_points_number = 7
+        self.interpolation_segments_number = 15
         self.min_segment_angle: Radians = math.pi / 2
         self.track = None
 
@@ -66,7 +66,7 @@ class TrackGenerator(State):
         """Returns interpolated path of hull points through Bezier Curves and start point"""
         bezier_curve = BezierCurve(points=points, curve_points_number=self.interpolation_segments_number)
         bezier_curve_points = bezier_curve.get_points()
-        start_point = bezier_curve_points[max(bezier_curve.curve_points_number // 10, 1)]
+        start_point = bezier_curve_points[max(bezier_curve.curve_points_number // 10, 3)]
 
         return bezier_curve_points, start_point
 

@@ -3,7 +3,7 @@ Based on https://github.com/kiecodes/genetic-algorithms/tree/master
 """
 
 import typing as t
-from random import choice, choices, randint, randrange, random
+from random import choice, choices, randint, randrange, uniform
 
 import numpy as np
 
@@ -98,12 +98,12 @@ def _random_mutation(individual: Individual, num: int = 1, probability: float = 
     """
 
     for _ in range(num):
-        if random() < probability:
+        if uniform(0, 1) < probability:
             layer = choice(individual.neural_network.weighted_layers)
             shape, flatten_weights = _get_flatten_weights(layer.weights)
 
             index = randrange(len(flatten_weights))
-            flatten_weights[index] = abs(flatten_weights[index] - 1)
+            flatten_weights[index] = abs(flatten_weights[index] - uniform(-1, 1))
             layer.weights = flatten_weights.reshape(shape)
 
     return individual
@@ -127,10 +127,10 @@ def run_evolution(
     :return: Sequence of neural networks from all individuals of the next generation
     """
     population = sort_function(population)
-    individuals_number = len(population)
+    population_size = len(population)
 
-    next_generation = population[0:2 + (individuals_number % 2)]
-    for j in range(int(individuals_number / 2) - 1):
+    next_generation = population[0:2 + (population_size % 2)]
+    for j in range(int(population_size / 2) - 1):
         parents = selection_function(population)
         father = parents[0]
         mother = parents[1]
@@ -147,3 +147,12 @@ def run_evolution(
         next_generation_neural_networks.append(individual.neural_network)
 
     return next_generation_neural_networks
+
+
+def print_population(population: Population) -> None:
+    population_size = len(population)
+    fitness_list = [individual.fitness for individual in population]
+    average_fitness = sum(fitness_list) / population_size
+    max_fitness = max(fitness_list)
+    print(f'Population size: {population_size}, Average fitness: {average_fitness}, Max fitness: {max_fitness}')
+    print('-' * 20)

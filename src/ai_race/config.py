@@ -5,7 +5,7 @@ class Config:
     CAPTION = 'AI Race'
     FPS = 120
     TARGET_FPS = 60
-    DEBUG = True
+    DEBUG = False
 
 
 base_config = Config()

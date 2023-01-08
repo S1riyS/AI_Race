@@ -115,7 +115,7 @@ def run_evolution(
         selection_function: SelectionFunction = _fitness_based_selection,
         crossover_function: CrossoverFunction = _single_point_crossover,
         mutation_function: MutationFunction = _random_mutation
-) -> t.Sequence[NeuralNetwork]:
+) -> Population:
     """
     Runs evolution of given population
 
@@ -141,12 +141,7 @@ def run_evolution(
 
         next_generation += [offspring_a, offspring_b]
 
-    # Extracting neural networks from all individuals of next generation
-    next_generation_neural_networks = []
-    for individual in next_generation:
-        next_generation_neural_networks.append(individual.neural_network)
-
-    return next_generation_neural_networks
+    return next_generation
 
 
 def print_population(population: Population) -> None:

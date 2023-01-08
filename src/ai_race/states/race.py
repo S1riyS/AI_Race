@@ -8,7 +8,7 @@ from sprites.car import AICar, UserCar, CarClass
 from sprites.track import Track
 from ai import NeuralNetwork
 from ai.layers import Layer
-from ai.genetic_algorithm import run_evolution, print_population, Individual
+from ai.genetic_algorithm import run_evolution, print_population, Individual, Population
 
 
 class Race(State):
@@ -22,33 +22,43 @@ class Race(State):
 
         self.cars_number = 10
         self.add_user_car = False
+
+        self.race_time = 10000
         self.current_time = 0
         self.last_tick = pygame.time.get_ticks()
-        self.cooldown = 10000  # Race time in milliseconds
-        self.population = []
 
-        self.start_race()
+        self.current_population = []
 
-    def add_to_population(self, car: CarClass):
+        self.__start_race()
+
+    def __add_to_population(self, car: CarClass) -> None:
+        """
+        Adds car to current population
+
+        :param car: :class:`UserCar` or :class:`AICar` instance
+        """
         if isinstance(car, AICar) and not car.destroyed:
             fitness = car.evaluate(self.track.central_curve, self.current_time)
-            self.population.append(Individual(
+            self.current_population.append(Individual(
                 neural_network=car.neural_network,
                 fitness=fitness
             ))
         car.kill()
 
-    def start_race(self, neural_networks: t.Optional[t.Sequence[NeuralNetwork]] = None):
+    def __start_race(self) -> None:
+        """Starts new race"""
         self.last_tick = pygame.time.get_ticks()
-        self.population = []
 
+        # Adding user car
         if self.add_user_car:
             self.cars.add(UserCar(
                 start_position=self.track.start_point,
                 camera=self.app.camera_group
             ))
 
-        if neural_networks is None:
+        # First race
+        if not self.current_population:
+            print('FIRST RACE', len(self.current_population))
             for i in range(self.cars_number):
                 car = AICar(
                     start_position=self.track.start_point,
@@ -61,21 +71,30 @@ class Race(State):
                     camera=self.app.camera_group
                 )
                 self.cars.add(car)
+
+        # Subsequent races
         else:
-            for neural_network in neural_networks:
+            print_population(self.current_population)
+            next_generation = run_evolution(self.current_population)
+
+            for individual in next_generation:
                 car = AICar(
                     self.track.start_point,
-                    neural_network=neural_network,
+                    neural_network=individual.neural_network,
                     camera=self.app.camera_group
                 )
                 self.cars.add(car)
 
+            self.current_population = []
+
     def handle_events(self, event) -> None:
         key = pygame.key.get_pressed()
+
+        # Starting the race from the very beginning
         if key[pygame.K_1]:
             for car in self.cars:
                 car.kill()
-            self.start_race()
+            self.__start_race()
 
     def update(self, dt):
         self.cars.update(dt)
@@ -84,35 +103,30 @@ class Race(State):
         now = pygame.time.get_ticks()
         self.current_time = now - self.last_tick
 
-        if self.current_time >= self.cooldown:
-            self.last_tick = now
+        if self.current_time >= self.race_time:
+            # Adding all remaining cars to the current population after the time expires
             for car in self.cars:
-                self.add_to_population(car)
+                self.__add_to_population(car)
 
-            print_population(self.population)
-            neural_networks = run_evolution(self.population)
-            self.start_race(neural_networks)
+            self.__start_race()
 
     def render(self, surface):
         surface.fill(context['theme'].BACKGROUND_COLOR)
-        if self.app.config.DEBUG:
-            for car in self.cars:
-                car.draw_rays()
-
         self.app.camera_group.custom_draw(target=self.cars.sprites()[0])
 
         for car in self.cars:
             nearest_walls = car.get_nearest_walls(self.walls)
 
+            # Checking collision with walls
             for wall in nearest_walls:
                 if pygame.sprite.collide_mask(car, wall):
-                    self.add_to_population(car)
+                    self.__add_to_population(car)
 
+                    # All cars have collided with walls
                     if len(self.cars) <= 0:
-                        print_population(self.population)
-                        neural_networks = run_evolution(self.population)
-                        self.start_race(neural_networks)
+                        self.__start_race()
 
+            # Raycasting
             for ray in car.rays:
                 point, distance = ray.cast(nearest_walls)
                 if point:

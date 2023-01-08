@@ -40,18 +40,18 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
         self.rotation = 0
-        self.rotation_speed = 4
+        self.rotation_speed = 5
 
         self.velocity = 0
         self.max_velocity = 15
         self.acceleration = 0.2
-        self.deceleration = 0.1
+        self.deceleration = 0.2
 
         self.camera = camera
         self.rays = pygame.sprite.Group()
-        self.init_rays(number=9)
+        self.__init_rays(number=9)
 
-    def init_rays(self, number: int):
+    def __init_rays(self, number: int) -> None:
         number = max(2, number)
         for i in range(number):
             angle = (pi / (number - 1)) * i
@@ -62,7 +62,7 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
             )
             self.rays.add(ray)
 
-    def draw_rays(self):
+    def draw_rays(self) -> None:
         for ray in self.rays:
             ray.draw()
 
@@ -127,7 +127,13 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
             ray.kill()
         super().kill()
 
-    def rotate(self, dt, rotation_power=0):
+    def rotate(self, dt: float, rotation_power: float = 0) -> None:
+        """
+        Rotates car
+
+        :param dt: Delta time
+        :param rotation_power: Power of rotation (varies from -1 to 1)
+        """
         self.rotation = (self.rotation + self.rotation_speed * rotation_power * dt) % 360
 
         new_image = pygame.transform.rotate(self.original_image, self.rotation)
@@ -136,34 +142,37 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = old_center
 
-    def move_forward(self, dt: float, engine_power: float = 1):
+    def move_forward(self, dt: float, engine_power: float = 1) -> None:
         self.velocity = min(self.velocity + self.acceleration * engine_power * dt, self.max_velocity)
-        self.move(dt, engine_power)
+        self._move(dt, engine_power)
 
-    def move_backward(self, dt: float):
+    def move_backward(self, dt: float, engine_power: float = 1) -> None:
         self.velocity = max(self.velocity - self.acceleration * dt, -self.max_velocity / 2)
-        self.move(dt)
+        self._move(dt, engine_power)
 
-    def reduce_speed(self, dt: float):
+    def reduce_speed(self, dt: float) -> None:
         self.velocity = max(self.velocity - self.deceleration * dt, 0)
-        self.move(dt)
+        self._move(dt)
 
-    def move(self, dt: float, power: float = 1):
+    def _move(self, dt: float, engine_power: float) -> None:
+        """
+        Moves car
+
+        :param dt: Delta time
+        :param engine_power: Power of engine (varies from 0 to 1)
+        """
         velocity_vector = Vector2(
             self.velocity * cos(radians(self.rotation)),
             -self.velocity * sin(radians(self.rotation))
         )
-        self.position += velocity_vector * power * dt
+        self.position += velocity_vector * engine_power * dt
         self.rect.center = self.position
 
-    def update(self, dt) -> None:
-        self.inherited_update(dt)
+    @abstractmethod
+    def update(self, dt: float) -> None:
+        """Updates car's data"""
         self.rays.update()
         self.mask = pygame.mask.from_surface(self.image)
-
-    @abstractmethod
-    def inherited_update(self, dt) -> None:
-        """Updates car's data"""
 
 
 class UserCar(AbstractCar):
@@ -171,7 +180,7 @@ class UserCar(AbstractCar):
         self.color = context['theme'].USER_CAR_COLOR
         super().__init__(start_position, camera)
 
-    def inherited_update(self, dt) -> None:
+    def update(self, dt) -> None:
         key = pygame.key.get_pressed()
         moved = False
 
@@ -189,6 +198,8 @@ class UserCar(AbstractCar):
         if not moved:
             self.reduce_speed(dt)
 
+        super().update(dt)
+
 
 class AICar(AbstractCar):
     def __init__(self, start_position: Point, neural_network: NeuralNetwork, camera):
@@ -197,22 +208,24 @@ class AICar(AbstractCar):
 
         super().__init__(start_position, camera)
 
-    def get_neural_network_inputs(self):
+    def __get_neural_network_inputs(self) -> t.List[float]:
         inputs = []
         for ray in self.rays:
             inputs.append(ray.current_distance / ray.length)
 
         return inputs
 
-    def inherited_update(self, dt) -> None:
-        inputs_list = self.get_neural_network_inputs()
+    def update(self, dt) -> None:
+        inputs_list = self.__get_neural_network_inputs()
         answer = self.neural_network.query(inputs_list)
 
-        rotation_power = (2 * answer[0][0]) - 1  # Scales output to [-1; 1]
+        rotation_power = (2 * answer[0][0]) - 1
         engine_power = answer[1][0]
 
         self.rotate(dt, rotation_power=rotation_power)
         self.move_forward(dt, engine_power=engine_power)
+
+        super().update(dt)
 
 
 CarClass = t.Union[UserCar, AICar]

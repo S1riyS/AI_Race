@@ -18,7 +18,7 @@ from local_typing import Point, Curve
 class TrackGenerator(State):
     def __init__(self, app):
         super().__init__(app)
-        self.track_width = 275
+        self.track_width = 325
         self.scale = 3
         self.random_points_number = 7
         self.interpolation_segments_number = 15

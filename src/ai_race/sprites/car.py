@@ -1,6 +1,7 @@
 import typing as t
 from abc import ABC, abstractmethod
 from math import sin, cos, radians, pi, hypot
+from random import randint
 
 import pygame
 from pygame.math import Vector2
@@ -30,7 +31,11 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
-        self.position = Vector2(self.x, self.y)
+
+        random_offset = Vector2(randint(-10, 10), randint(-10, 10))
+        self.position = Vector2(self.x, self.y) + random_offset
+        self.start_position = Vector2(self.x, self.y) + random_offset
+        self.destroyed = False
 
         self.mask = pygame.mask.from_surface(self.image)
 
@@ -73,7 +78,16 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
         return nearest_walls
 
-    def evaluate(self, curve: Curve):
+    def evaluate(self, curve: Curve) -> float:
+        """
+        Evaluates car's results based on its position relative to given curve
+
+        :param curve: Curve to evaluation
+        :return: Fitness coefficient
+        """
+        if hypot(self.position.x - self.start_position.x, self.position.y - self.start_position.y) <= 5:
+            return 1.0
+
         fit = 0
 
         min_distance = float('inf')
@@ -102,6 +116,7 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         return fit
 
     def kill(self) -> None:
+        self.destroyed = True
         for ray in self.rays:
             ray.kill()
         super().kill()
@@ -183,7 +198,9 @@ class AICar(AbstractCar):
         inputs = []
         for ray in self.rays:
             inputs.append(ray.current_distance / ray.length)
+
         inputs.append(self.velocity / self.max_velocity)
+        inputs.append(radians(self.rotation) / (2 * pi))
 
         return inputs
 
@@ -192,20 +209,14 @@ class AICar(AbstractCar):
         answer = self.neural_network.query(inputs_list)
         action = answer.argmax()
 
-        moved = False
-        if action == 0:
-            moved = True
-            self.move_backward(dt)
-        elif action == 1:
-            moved = True
-            self.move_forward(dt)
-        if action == 2:
-            self.rotate(dt, right=True)
-        elif action == 3:
-            self.rotate(dt, left=True)
+        self.move_forward(dt)
 
-        if not moved:
-            self.reduce_speed(dt)
+        if action == 0:
+            self.rotate(dt, right=True)
+        elif action == 1:
+            self.rotate(dt, left=True)
+        elif action == 2:
+            self.move_backward(dt)
 
 
 CarClass = t.Union[UserCar, AICar]

@@ -8,13 +8,15 @@ from .layers import Layer
 class NeuralNetwork:
     def __init__(self, layers_sequence: t.Sequence[Layer]):
         """
-        First layer must contain number of units that equals to number of car's rays + car's velocity
+        First layer must contain number of neurons that equals to number of car's rays.
+        Last layer must contain 2 neurons (rotation coefficient and engine power)
 
         For example: each car has 6 rays, then initialization of neural network will look like this:
 
             neural_network = NeuralNetwork([
-                Layer(units=7, activation='sigmoid (e.g.)'),
-                ...
+                Layer(units=6, activation='sigmoid (e.g.)'),
+                ...,
+                Layer(units=2)
             ])
         :param layers_sequence: Sequence of Layer class instances
         """
@@ -30,8 +32,13 @@ class NeuralNetwork:
 
             layer.weights = np.random.normal(0.0, pow(layer.units, -0.5), (next_layer.units, layer.units))
 
-    def query(self, inputs_list: t.Iterable[t.Any]) -> np.ndarray:
-        """Returns answer of neural network"""
+    def query(self, inputs_list: t.Iterable[float]) -> np.ndarray:
+        """
+        Runs input data through the neural network
+
+        :param inputs_list: Iterable object with input data
+        :return: Numpy array with the results of the neural network
+        """
         inputs = np.array(inputs_list, ndmin=2).T
 
         current_array = inputs

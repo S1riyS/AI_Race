@@ -127,14 +127,14 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
             ray.kill()
         super().kill()
 
-    def rotate(self, dt: float, rotation_power: float = 0) -> None:
+    def rotate(self, dt: float, rotation_coefficient: float = 0) -> None:
         """
         Rotates car
 
         :param dt: Delta time
         :param rotation_power: Power of rotation (varies from -1 to 1)
         """
-        self.rotation = (self.rotation + self.rotation_speed * rotation_power * dt) % 360
+        self.rotation = (self.rotation + self.rotation_speed * rotation_coefficient * dt) % 360
 
         new_image = pygame.transform.rotate(self.original_image, self.rotation)
         old_center = self.rect.center
@@ -219,10 +219,10 @@ class AICar(AbstractCar):
         inputs_list = self.__get_neural_network_inputs()
         answer = self.neural_network.query(inputs_list)
 
-        rotation_power = (2 * answer[0][0]) - 1
+        rotation_coefficient = (2 * answer[0][0]) - 1
         engine_power = answer[1][0]
 
-        self.rotate(dt, rotation_power=rotation_power)
+        self.rotate(dt, rotation_coefficient=rotation_coefficient)
         self.move_forward(dt, engine_power=engine_power)
 
         super().update(dt)

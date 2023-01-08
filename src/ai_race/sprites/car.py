@@ -40,16 +40,16 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
         self.rotation = 0
-        self.rotation_speed = 3.5
+        self.rotation_speed = 4
 
         self.velocity = 0
-        self.max_velocity = 11
+        self.max_velocity = 15
         self.acceleration = 0.2
-        self.deceleration = 0.5
+        self.deceleration = 0.1
 
         self.camera = camera
         self.rays = pygame.sprite.Group()
-        self.init_rays(number=6)
+        self.init_rays(number=9)
 
     def init_rays(self, number: int):
         number = max(2, number)
@@ -78,11 +78,12 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
         return nearest_walls
 
-    def evaluate(self, curve: Curve) -> float:
+    def evaluate(self, curve: Curve, lifetime: int) -> float:
         """
         Evaluates car's results based on its position relative to given curve
 
         :param curve: Curve to evaluation
+        :param lifetime: time of car's life in milliseconds
         :return: Fitness coefficient
         """
         if hypot(self.position.x - self.start_position.x, self.position.y - self.start_position.y) <= 5:
@@ -103,16 +104,21 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
                 closest_index = index
 
         # Calculating path length from the first point on curve to the point before closest to current position of car
+        path_length = 0
         for i in range(closest_index - 1):
             current_point = curve[i]
             next_point = curve[i + 1]
             dx = next_point[0] - current_point[0]
             dy = next_point[1] - current_point[1]
-            fit += hypot(dx, dy)
+            path_length += hypot(dx, dy)
 
         # Calculating distance between the point before closest to current position of car to the position of car
         penultimate_closest_point = curve[closest_index - 1]
-        fit += hypot(penultimate_closest_point[0] - self.position[0], penultimate_closest_point[1] - self.position[1])
+        path_length += hypot(penultimate_closest_point[0] - self.position[0],
+                             penultimate_closest_point[1] - self.position[1])
+
+        fit += path_length
+        fit += (path_length / lifetime) * 75
         return fit
 
     def kill(self) -> None:
@@ -121,11 +127,8 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
             ray.kill()
         super().kill()
 
-    def rotate(self, dt, left=False, right=False):
-        if left:
-            self.rotation = (self.rotation + self.rotation_speed * dt) % 360
-        elif right:
-            self.rotation = (self.rotation - self.rotation_speed * dt) % 360
+    def rotate(self, dt, rotation_power=0):
+        self.rotation = (self.rotation + self.rotation_speed * rotation_power * dt) % 360
 
         new_image = pygame.transform.rotate(self.original_image, self.rotation)
         old_center = self.rect.center
@@ -133,24 +136,24 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = old_center
 
-    def move_forward(self, dt):
-        self.velocity = min(self.velocity + self.acceleration * dt, self.max_velocity)
-        self.move(dt)
+    def move_forward(self, dt: float, engine_power: float = 1):
+        self.velocity = min(self.velocity + self.acceleration * engine_power * dt, self.max_velocity)
+        self.move(dt, engine_power)
 
-    def move_backward(self, dt):
+    def move_backward(self, dt: float):
         self.velocity = max(self.velocity - self.acceleration * dt, -self.max_velocity / 2)
         self.move(dt)
 
-    def reduce_speed(self, dt):
+    def reduce_speed(self, dt: float):
         self.velocity = max(self.velocity - self.deceleration * dt, 0)
         self.move(dt)
 
-    def move(self, dt):
+    def move(self, dt: float, power: float = 1):
         velocity_vector = Vector2(
             self.velocity * cos(radians(self.rotation)),
             -self.velocity * sin(radians(self.rotation))
         )
-        self.position += velocity_vector * dt
+        self.position += velocity_vector * power * dt
         self.rect.center = self.position
 
     def update(self, dt) -> None:
@@ -179,9 +182,9 @@ class UserCar(AbstractCar):
             moved = True
             self.move_forward(dt)
         if key[pygame.K_RIGHT]:
-            self.rotate(dt, right=True)
+            self.rotate(dt, rotation_power=-1)
         elif key[pygame.K_LEFT]:
-            self.rotate(dt, left=True)
+            self.rotate(dt, rotation_power=1)
 
         if not moved:
             self.reduce_speed(dt)
@@ -199,24 +202,17 @@ class AICar(AbstractCar):
         for ray in self.rays:
             inputs.append(ray.current_distance / ray.length)
 
-        inputs.append(self.velocity / self.max_velocity)
-        inputs.append(radians(self.rotation) / (2 * pi))
-
         return inputs
 
     def inherited_update(self, dt) -> None:
         inputs_list = self.get_neural_network_inputs()
         answer = self.neural_network.query(inputs_list)
-        action = answer.argmax()
 
-        self.move_forward(dt)
+        rotation_power = (2 * answer[0][0]) - 1  # Scales output to [-1; 1]
+        engine_power = answer[1][0]
 
-        if action == 0:
-            self.rotate(dt, right=True)
-        elif action == 1:
-            self.rotate(dt, left=True)
-        elif action == 2:
-            self.move_backward(dt)
+        self.rotate(dt, rotation_power=rotation_power)
+        self.move_forward(dt, engine_power=engine_power)
 
 
 CarClass = t.Union[UserCar, AICar]

@@ -4,7 +4,7 @@ import pygame
 
 from globals import context
 from states.state import State
-from sprites.car import AICar, UserCar
+from sprites.car import AICar, UserCar, CarClass
 from sprites.track import Track
 from ai import NeuralNetwork
 from ai.layers import Layer
@@ -22,11 +22,21 @@ class Race(State):
 
         self.cars_number = 10
         self.add_user_car = False
+        self.current_time = 0
         self.last_tick = pygame.time.get_ticks()
         self.cooldown = 10000  # Race time in milliseconds
         self.population = []
 
         self.start_race()
+
+    def add_to_population(self, car: CarClass):
+        if isinstance(car, AICar) and not car.destroyed:
+            fitness = car.evaluate(self.track.central_curve, self.current_time)
+            self.population.append(Individual(
+                neural_network=car.neural_network,
+                fitness=fitness
+            ))
+        car.kill()
 
     def start_race(self, neural_networks: t.Optional[t.Sequence[NeuralNetwork]] = None):
         self.last_tick = pygame.time.get_ticks()
@@ -43,10 +53,10 @@ class Race(State):
                 car = AICar(
                     start_position=self.track.start_point,
                     neural_network=NeuralNetwork([
-                        Layer(units=8, activation='sigmoid'),
-                        Layer(units=10, activation='sigmoid'),
-                        Layer(units=10, activation='sigmoid'),
-                        Layer(units=3),
+                        Layer(units=9, activation='sigmoid'),
+                        Layer(units=6, activation='sigmoid'),
+                        Layer(units=5, activation='sigmoid'),
+                        Layer(units=2),
                     ]),
                     camera=self.app.camera_group
                 )
@@ -72,16 +82,12 @@ class Race(State):
         self.walls.update()
 
         now = pygame.time.get_ticks()
-        if now - self.last_tick >= self.cooldown:
+        self.current_time = now - self.last_tick
+
+        if self.current_time >= self.cooldown:
             self.last_tick = now
             for car in self.cars:
-                if isinstance(car, AICar) and not car.destroyed:
-                    fitness = car.evaluate(self.track.central_curve)
-                    self.population.append(Individual(
-                        neural_network=car.neural_network,
-                        fitness=fitness
-                    ))
-                car.kill()
+                self.add_to_population(car)
 
             print_population(self.population)
             neural_networks = run_evolution(self.population)
@@ -89,25 +95,18 @@ class Race(State):
 
     def render(self, surface):
         surface.fill(context['theme'].BACKGROUND_COLOR)
-
-        self.app.camera_group.custom_draw(target=self.cars.sprites()[0])
-
         if self.app.config.DEBUG:
             for car in self.cars:
                 car.draw_rays()
+
+        self.app.camera_group.custom_draw(target=self.cars.sprites()[0])
 
         for car in self.cars:
             nearest_walls = car.get_nearest_walls(self.walls)
 
             for wall in nearest_walls:
                 if pygame.sprite.collide_mask(car, wall):
-                    if isinstance(car, AICar) and not car.destroyed:
-                        fitness = car.evaluate(self.track.central_curve)
-                        self.population.append(Individual(
-                            neural_network=car.neural_network,
-                            fitness=fitness
-                        ))
-                    car.kill()
+                    self.add_to_population(car)
 
                     if len(self.cars) <= 0:
                         print_population(self.population)

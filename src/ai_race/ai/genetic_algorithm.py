@@ -29,9 +29,10 @@ def _fitness_based_sort(population: Population) -> Population:
 
 def _fitness_based_selection(population: Population) -> t.Annotated[t.List[Individual], 2]:
     """Selects two random individuals from population based on their fitness"""
+    min_fitness = min([individual.fitness for individual in population])
     return choices(
         population=population,
-        weights=[individual.fitness for individual in population],
+        weights=[individual.fitness - min_fitness for individual in population],
         k=2
     )
 
@@ -58,6 +59,7 @@ def _single_point_crossover(
     :param a: :class:`Individual` instance (father)
     :param b: :class:`Individual` instance (mother)
     :param point: Point after which weights will be interchanged, default = None
+    :return: Two offsprings (:class:`Individual` instances)
 
     :raises ValueError: If shapes of layers are different
     """
@@ -69,7 +71,7 @@ def _single_point_crossover(
             raise ValueError('Layers\' weights must have the same shape')
 
         shape, flatten_weights_a = _get_flatten_weights(weights_a)
-        _, flatten_weights_b = _get_flatten_weights(weights_a)
+        _, flatten_weights_b = _get_flatten_weights(weights_b)
 
         length = len(flatten_weights_a)
         if point is None:
@@ -89,6 +91,43 @@ def _single_point_crossover(
     return a, b
 
 
+def _uniform_crossover(a: Individual, b: Individual) -> t.Tuple[Individual, Individual]:
+    """
+    In uniform crossover each gen is chosen from either parent with equal probability.
+
+    :param a: :class:`Individual` instance (father)
+    :param b: :class:`Individual` instance (mother)
+    :return: Two offsprings (:class:`Individual` instances)
+
+    :raises ValueError: If shapes of layers are different
+    """
+    for layer_a, layer_b in zip(a.neural_network.weighted_layers, b.neural_network.weighted_layers):
+        weights_a = layer_a.weights
+        weights_b = layer_b.weights
+
+        if weights_a.shape != weights_b.shape:
+            raise ValueError('Layers\' weights must have the same shape')
+
+        shape, flatten_weights_a = _get_flatten_weights(weights_a)
+        _, flatten_weights_b = _get_flatten_weights(weights_b)
+
+        offspring_a = np.array([])
+        offspring_b = np.array([])
+
+        for gen_a, gen_b in zip(flatten_weights_a, flatten_weights_b):
+            if uniform(0, 1) <= 0.5:
+                offspring_a = np.append(offspring_a, gen_b)
+                offspring_b = np.append(offspring_b, gen_a)
+            else:
+                offspring_a = np.append(offspring_a, gen_a)
+                offspring_b = np.append(offspring_b, gen_b)
+
+        layer_a.weights = offspring_a.reshape(shape)
+        layer_b.weights = offspring_b.reshape(shape)
+
+        return a, b
+
+
 def _random_mutation(individual: Individual, num: int = 1, probability: float = 0.5) -> Individual:
     """Applies mutation to weights of neural network
 
@@ -98,12 +137,12 @@ def _random_mutation(individual: Individual, num: int = 1, probability: float = 
     """
 
     for _ in range(num):
-        if uniform(0, 1) < probability:
+        if uniform(0, 1) <= probability:
             layer = choice(individual.neural_network.weighted_layers)
             shape, flatten_weights = _get_flatten_weights(layer.weights)
 
             index = randrange(len(flatten_weights))
-            flatten_weights[index] = abs(flatten_weights[index] - uniform(-1, 1))
+            flatten_weights[index] += uniform(-2.0, 2.0)
             layer.weights = flatten_weights.reshape(shape)
 
     return individual
@@ -113,7 +152,7 @@ def run_evolution(
         population: Population,
         sort_function: SortFunction = _fitness_based_sort,
         selection_function: SelectionFunction = _fitness_based_selection,
-        crossover_function: CrossoverFunction = _single_point_crossover,
+        crossover_function: CrossoverFunction = _uniform_crossover,
         mutation_function: MutationFunction = _random_mutation
 ) -> Population:
     """

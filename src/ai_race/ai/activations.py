@@ -11,7 +11,12 @@ def _sigmoid(x: np.ndarray) -> np.ndarray:
     return 1 / (1 + np.exp(-x))
 
 
+def _softmax(x: np.ndarray) -> np.ndarray:
+    return np.exp(x - np.max(x)) / np.exp(x - np.max(x)).sum()
+
+
 activation_functions = {
     'relu': _relu,
-    'sigmoid': _sigmoid
+    'sigmoid': _sigmoid,
+    'softmax': _softmax
 }

@@ -1,14 +1,12 @@
-import typing as t
-
 import pygame
 
 from globals import context
 from states.state import State
 from sprites.car import AICar, UserCar, CarClass
 from sprites.track import Track
-from ai import NeuralNetwork
-from ai.layers import Layer
-from ai.genetic_algorithm import run_evolution, print_population, Individual, Population
+from ai.neural_network import NeuralNetwork
+from ai.neural_network.layers import Layer
+from ai.genetic_algorithm import run_evolution, print_population, Individual
 
 
 class Race(State):
@@ -64,7 +62,7 @@ class Race(State):
                     start_position=self.track.start_point,
                     neural_network=NeuralNetwork([
                         Layer(units=7, activation='relu'),
-                        Layer(units=5, activation='relu'),
+                        Layer(units=10, activation='sigmoid'),
                         Layer(units=4, activation='sigmoid'),
                         Layer(units=3),
                     ]),

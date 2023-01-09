@@ -18,7 +18,19 @@ class BaseLayer(ABC):
 class Layer(BaseLayer):
     """Dense layer of neural network"""
 
-    def __init__(self, units: int, activation: t.Optional[str] = None):
+    def __init__(
+            self,
+            units: int,
+            activation: t.Optional[str] = None,
+            weights: t.Optional[np.ndarray] = None,
+            bias: t.Optional[np.ndarray] = None
+    ):
+        """
+        :param units: Number of neurons on this layer
+        :param activation: Name of activation function (default = None)
+        :param weights: Layer's weights (default = None)
+        :param bias: Layer's bias (default = None)
+        """
         """
         :param units: Number of neurons
         :param activation: Name of activation function
@@ -26,7 +38,8 @@ class Layer(BaseLayer):
         self.units = units
         self.activation_function = activation_functions.get(activation, None)
 
-        self.weights: t.Optional[np.ndarray] = None
+        self.weights = weights
+        self.bias = bias
 
     def __repr__(self):
         return self._repr({

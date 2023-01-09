@@ -7,7 +7,7 @@ import pygame
 from pygame.math import Vector2
 
 from globals import context
-from ai import NeuralNetwork
+from ai.neural_network import NeuralNetwork
 from sprites.ray import Ray
 from sprites.wall import Wall
 from local_typing import Point, Curve
@@ -49,12 +49,13 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
         self.camera = camera
         self.rays = pygame.sprite.Group()
+        self.view_angle = 2 * pi / 3
         self.__init_rays(number=6)
 
     def __init_rays(self, number: int) -> None:
         number = max(2, number)
         for i in range(number):
-            angle = (pi / (2 * (number - 1))) * i
+            angle = (self.view_angle / (number - 1)) * i
             ray = Ray(
                 car=self,
                 length=250,

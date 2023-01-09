@@ -31,8 +31,8 @@ class Ray(LineSprite):
             -sin(radians(self.car.rotation))
         )
         ray_direction = Vector2(
-            cos(radians(self.car.rotation) + self.angle - pi / 2),
-            -sin(radians(self.car.rotation) + self.angle - pi / 2)
+            cos(radians(self.car.rotation) + self.angle - pi / 4),
+            -sin(radians(self.car.rotation) + self.angle - pi / 4)
         )
 
         start_position = self.car.position + car_direction * self.car.height

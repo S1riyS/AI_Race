@@ -20,7 +20,7 @@ class Race(State):
         walls = track.generate_walls(self.app.camera_group, closed=False)
         self.walls.add(walls)
 
-        self.cars_number = 10
+        self.cars_number = 15
         self.add_user_car = False
 
         self.race_time = 10000
@@ -38,7 +38,7 @@ class Race(State):
         :param car: :class:`UserCar` or :class:`AICar` instance
         """
         if isinstance(car, AICar) and not car.destroyed:
-            fitness = car.evaluate(self.track.central_curve, self.current_time)
+            fitness = car.evaluate(self.track.central_curve)
             self.current_population.append(Individual(
                 neural_network=car.neural_network,
                 fitness=fitness
@@ -63,10 +63,10 @@ class Race(State):
                 car = AICar(
                     start_position=self.track.start_point,
                     neural_network=NeuralNetwork([
-                        Layer(units=9, activation='sigmoid'),
-                        Layer(units=6, activation='sigmoid'),
-                        Layer(units=5, activation='sigmoid'),
-                        Layer(units=2),
+                        Layer(units=7, activation='relu'),
+                        Layer(units=5, activation='relu'),
+                        Layer(units=4, activation='sigmoid'),
+                        Layer(units=3),
                     ]),
                     camera=self.app.camera_group
                 )
@@ -85,7 +85,7 @@ class Race(State):
                 )
                 self.cars.add(car)
 
-            self.current_population = []
+        self.current_population = []
 
     def handle_events(self, event) -> None:
         key = pygame.key.get_pressed()

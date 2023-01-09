@@ -44,17 +44,17 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
 
         self.velocity = 0
         self.max_velocity = 15
-        self.acceleration = 0.2
-        self.deceleration = 0.2
+        self.acceleration = 0.3
+        self.deceleration = 0.3
 
         self.camera = camera
         self.rays = pygame.sprite.Group()
-        self.__init_rays(number=9)
+        self.__init_rays(number=6)
 
     def __init_rays(self, number: int) -> None:
         number = max(2, number)
         for i in range(number):
-            angle = (pi / (number - 1)) * i
+            angle = (pi / (2 * (number - 1))) * i
             ray = Ray(
                 car=self,
                 length=250,
@@ -73,17 +73,16 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
             dy = wall.start_position[1] - self.position.y
             distance = hypot(dx, dy)
 
-            if distance <= 900:
+            if distance <= 500:
                 nearest_walls.append(wall)
 
         return nearest_walls
 
-    def evaluate(self, curve: Curve, lifetime: int) -> float:
+    def evaluate(self, curve: Curve) -> float:
         """
         Evaluates car's results based on its position relative to given curve
 
         :param curve: Curve to evaluation
-        :param lifetime: time of car's life in milliseconds
         :return: Fitness coefficient
         """
         if hypot(self.position.x - self.start_position.x, self.position.y - self.start_position.y) <= 5:
@@ -118,7 +117,6 @@ class AbstractCar(ABC, pygame.sprite.Sprite):
                              penultimate_closest_point[1] - self.position[1])
 
         fit += path_length
-        fit += (path_length / lifetime) * 75
         return fit
 
     def kill(self) -> None:
@@ -213,17 +211,25 @@ class AICar(AbstractCar):
         for ray in self.rays:
             inputs.append(ray.current_distance / ray.length)
 
+        inputs.append(self.velocity / self.max_velocity)
+
         return inputs
 
     def update(self, dt) -> None:
         inputs_list = self.__get_neural_network_inputs()
         answer = self.neural_network.query(inputs_list)
 
-        rotation_coefficient = (2 * answer[0][0]) - 1
-        engine_power = answer[1][0]
+        engine_power = answer[0][0]
+        # rotation_coefficient = (2 * answer[0][0]) - 1
+        rotate_left = answer[1][0]
+        rotate_right = answer[2][0]
 
-        self.rotate(dt, rotation_coefficient=rotation_coefficient)
         self.move_forward(dt, engine_power=engine_power)
+
+        if rotate_left > 0.5:
+            self.rotate(dt, rotation_coefficient=1)
+        if rotate_right > 0.5:
+            self.rotate(dt, rotation_coefficient=-1)
 
         super().update(dt)
 

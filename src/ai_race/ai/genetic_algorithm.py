@@ -12,7 +12,7 @@ from ai import NeuralNetwork
 
 class Individual(t.NamedTuple):
     neural_network: NeuralNetwork
-    fitness: float
+    fitness: float = 0
 
 
 Population = t.Sequence[Individual]
@@ -47,46 +47,49 @@ def _get_flatten_weights(weights: np.ndarray) -> t.Tuple[t.Tuple[int, ...], np.n
     return original_shape, flatten_weights
 
 
-def _single_point_crossover(
-        a: Individual,
-        b: Individual,
-        point: t.Optional[int] = None
-) -> t.Tuple[Individual, Individual]:
+def _single_point_crossover(a: Individual, b: Individual) -> t.Tuple[Individual, Individual]:
     """Single Point Crossover is a form of crossover in which two-parent chromosome are
-    selected and a random/given point is selected and the genes/data are
-    interchanged between them after the given/selected point for example
+    selected and a random point is selected and the data are
+    interchanged between them after the selected point
 
     :param a: :class:`Individual` instance (father)
     :param b: :class:`Individual` instance (mother)
-    :param point: Point after which weights will be interchanged, default = None
     :return: Two offsprings (:class:`Individual` instances)
 
-    :raises ValueError: If shapes of layers are different
+    :raises ValueError: If shapes of weights or biases are different
     """
     for layer_a, layer_b in zip(a.neural_network.weighted_layers, b.neural_network.weighted_layers):
         weights_a = layer_a.weights
         weights_b = layer_b.weights
 
+        bias_a = layer_a.bias
+        bias_b = layer_b.bias
+
         if weights_a.shape != weights_b.shape:
             raise ValueError('Layers\' weights must have the same shape')
+        if bias_a.shape != bias_b.shape:
+            raise ValueError('Layers\' biases must have the same shape')
 
+        # Crossing weights
         shape, flatten_weights_a = _get_flatten_weights(weights_a)
         _, flatten_weights_b = _get_flatten_weights(weights_b)
 
-        length = len(flatten_weights_a)
-        if point is None:
-            p = randint(1, length - 1)
-        else:
-            if 1 <= point <= length - 1:
-                p = point
-            else:
-                p = randint(1, length - 1)
+        flatten_weights_length = len(flatten_weights_a)
+        p = randint(1, flatten_weights_length - 1)
 
-        reshaped_weights_a = np.concatenate([flatten_weights_a[:p], flatten_weights_b[p:]]).reshape(shape)
-        reshaped_weights_b = np.concatenate([flatten_weights_b[:p], flatten_weights_a[p:]]).reshape(shape)
+        offspring_a_weights = np.concatenate([flatten_weights_a[:p], flatten_weights_b[p:]]).reshape(shape)
+        offspring_b_weights = np.concatenate([flatten_weights_b[:p], flatten_weights_a[p:]]).reshape(shape)
 
-        layer_a.weights = reshaped_weights_a
-        layer_b.weights = reshaped_weights_b
+        layer_a.weights = offspring_a_weights
+        layer_b.weights = offspring_b_weights
+
+        # Crossing biases
+        k = randint(1, len(bias_a) - 1)
+        offspring_a_bias = np.concatenate([bias_a[:k], bias_b[k:]])
+        offspring_b_bias = np.concatenate([bias_b[:k], bias_a[k:]])
+
+        layer_a.bias = offspring_a_bias
+        layer_b.bias = offspring_b_bias
 
     return a, b
 
@@ -99,31 +102,53 @@ def _uniform_crossover(a: Individual, b: Individual) -> t.Tuple[Individual, Indi
     :param b: :class:`Individual` instance (mother)
     :return: Two offsprings (:class:`Individual` instances)
 
-    :raises ValueError: If shapes of layers are different
+    :raises ValueError: If shapes of weights or biases are different
     """
     for layer_a, layer_b in zip(a.neural_network.weighted_layers, b.neural_network.weighted_layers):
         weights_a = layer_a.weights
         weights_b = layer_b.weights
 
-        if weights_a.shape != weights_b.shape:
-            raise ValueError('Layers\' weights must have the same shape')
+        bias_a = layer_a.bias
+        bias_b = layer_b.bias
 
+        if weights_a.shape != weights_b.shape:
+            raise ValueError(f'Layers\' weights must have the same shape. {weights_a.shape} != {weights_b.shape}')
+        if bias_a.shape != bias_b.shape:
+            raise ValueError(f'Layers\' biases must have the same shape. {bias_a.shape} != {bias_b.shape}')
+
+        # Crossing weights
         shape, flatten_weights_a = _get_flatten_weights(weights_a)
         _, flatten_weights_b = _get_flatten_weights(weights_b)
 
-        offspring_a = np.array([])
-        offspring_b = np.array([])
+        offspring_a_weights = np.array([])
+        offspring_b_weights = np.array([])
 
         for gen_a, gen_b in zip(flatten_weights_a, flatten_weights_b):
             if uniform(0, 1) <= 0.5:
-                offspring_a = np.append(offspring_a, gen_b)
-                offspring_b = np.append(offspring_b, gen_a)
+                offspring_a_weights = np.append(offspring_a_weights, gen_b)
+                offspring_b_weights = np.append(offspring_b_weights, gen_a)
             else:
-                offspring_a = np.append(offspring_a, gen_a)
-                offspring_b = np.append(offspring_b, gen_b)
+                offspring_a_weights = np.append(offspring_a_weights, gen_a)
+                offspring_b_weights = np.append(offspring_b_weights, gen_b)
 
-        layer_a.weights = offspring_a.reshape(shape)
-        layer_b.weights = offspring_b.reshape(shape)
+        layer_a.weights = offspring_a_weights.reshape(shape)
+        layer_b.weights = offspring_b_weights.reshape(shape)
+
+        # Crossing biases
+        bias_shape = bias_a.shape
+        offspring_a_bias = np.array([])
+        offspring_b_bias = np.array([])
+
+        for bias_a_unit, bias_b_unit in zip(layer_a.bias, layer_b.bias):
+            if uniform(0, 1) <= 0.5:
+                offspring_a_bias = np.append(offspring_a_bias, bias_b_unit)
+                offspring_b_bias = np.append(offspring_b_bias, bias_a_unit)
+            else:
+                offspring_a_bias = np.append(offspring_a_bias, bias_a_unit)
+                offspring_b_bias = np.append(offspring_b_bias, bias_b_unit)
+
+        layer_a.bias = offspring_a_bias.reshape(bias_shape)
+        layer_b.bias = offspring_b_bias.reshape(bias_shape)
 
         return a, b
 

@@ -8,17 +8,7 @@ from .layers import Layer
 class NeuralNetwork:
     def __init__(self, layers_sequence: t.Sequence[Layer]):
         """
-        First layer must contain number of neurons that equals to number of car's rays.
-        Last layer must contain 2 neurons (rotation coefficient and engine power)
-
-        For example: each car has 6 rays, then initialization of neural network will look like this:
-
-            neural_network = NeuralNetwork([
-                Layer(units=6, activation='sigmoid (e.g.)'),
-                ...,
-                Layer(units=2)
-            ])
-        :param layers_sequence: Sequence of Layer class instances
+        :param layers_sequence: Sequence of :class:`Layer` class instances
         """
         self.layers = layers_sequence
         self.weighted_layers = self.layers[:-1]

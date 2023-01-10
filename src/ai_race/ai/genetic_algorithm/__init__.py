@@ -28,10 +28,10 @@ def _fitness_based_sort(population: Population) -> Population:
 
 def _fitness_based_selection(population: Population) -> t.Annotated[t.List[Individual], 2]:
     """Selects two random individuals from population based on their fitness"""
-    min_fitness = min([individual.fitness for individual in population])
+    population_fitness = sum([individual.fitness for individual in population])
     return choices(
         population=population,
-        weights=[individual.fitness - min_fitness for individual in population],
+        weights=[individual.fitness / population_fitness for individual in population],
         k=2
     )
 
@@ -75,12 +75,12 @@ def run_evolution(
     :param mutation_function: Mutation function of an individual
     :return: Sequence of neural networks from all individuals of the next generation
     """
-    population = sort_function(population)
-    population_size = len(population)
+    sorted_population = sort_function(population)
+    population_size = len(sorted_population)
 
-    next_generation = population[0:2 + (population_size % 2)]
+    next_generation = sorted_population[0:2 + (population_size % 2)]
     for j in range(int(population_size / 2) - 1):
-        parents = selection_function(population)
+        parents = selection_function(sorted_population)
         father = parents[0]
         mother = parents[1]
 

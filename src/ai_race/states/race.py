@@ -18,10 +18,10 @@ class Race(State):
         walls = track.generate_walls(self.app.camera_group, closed=False)
         self.walls.add(walls)
 
-        self.cars_number = 15
+        self.cars_number = 25
         self.add_user_car = False
 
-        self.race_time = 10000
+        self.race_time = 15000
         self.current_time = 0
         self.last_tick = pygame.time.get_ticks()
 
@@ -62,9 +62,8 @@ class Race(State):
                     start_position=self.track.start_point,
                     neural_network=NeuralNetwork([
                         Layer(units=7, activation='relu'),
-                        Layer(units=10, activation='sigmoid'),
-                        Layer(units=4, activation='sigmoid'),
-                        Layer(units=3),
+                        Layer(units=6, activation='sigmoid'),
+                        Layer(units=4),
                     ]),
                     camera=self.app.camera_group
                 )
@@ -110,7 +109,9 @@ class Race(State):
 
     def render(self, surface):
         surface.fill(context['theme'].BACKGROUND_COLOR)
-        self.app.camera_group.custom_draw(target=self.cars.sprites()[0])
+
+        sorted_cars = sorted([car for car in self.cars], key=lambda x: x.evaluate(self.track.central_curve), reverse=True)
+        self.app.camera_group.custom_draw(target=sorted_cars[0])
 
         for car in self.cars:
             nearest_walls = car.get_nearest_walls(self.walls)

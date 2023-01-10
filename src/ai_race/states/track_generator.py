@@ -18,8 +18,8 @@ from local_typing import Point, Curve
 class TrackGenerator(State):
     def __init__(self, app):
         super().__init__(app)
-        self.track_width = 325
-        self.scale = 3
+        self.track_width = 100
+        self.scale = 5
         self.random_points_number = 7
         self.interpolation_segments_number = 15
         self.min_segment_angle: Radians = math.pi / 2
@@ -66,7 +66,7 @@ class TrackGenerator(State):
         """Returns interpolated path of hull points through Bezier Curves and start point"""
         bezier_curve = BezierCurve(points=points, curve_points_number=self.interpolation_segments_number)
         bezier_curve_points = bezier_curve.get_points()
-        start_point = bezier_curve_points[max(bezier_curve.curve_points_number // 10, 3)]
+        start_point = bezier_curve_points[max(bezier_curve.curve_points_number // 10, 2)]
 
         return bezier_curve_points, start_point
 
@@ -106,14 +106,14 @@ class TrackGenerator(State):
 
             outer_curve_points.append(
                 (
-                    p2[0] + (1 / self.scale) * self.track_width * math.cos(beta),
-                    p2[1] + (1 / self.scale) * self.track_width * math.sin(beta)
+                    p2[0] + self.track_width * math.cos(beta),
+                    p2[1] + self.track_width * math.sin(beta)
                 )
             )
             inner_curve_points.append(
                 (
-                    p2[0] - (1 / self.scale) * self.track_width * math.cos(beta),
-                    p2[1] - (1 / self.scale) * self.track_width * math.sin(beta)
+                    p2[0] - self.track_width * math.cos(beta),
+                    p2[1] - self.track_width * math.sin(beta)
                 )
             )
 
